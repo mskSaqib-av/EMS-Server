@@ -28,6 +28,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddApplicationServices();
+builder.Services.ConfigureProcessor();
 
 // Add Authentication
 builder.Services.AddAuthentication(options =>

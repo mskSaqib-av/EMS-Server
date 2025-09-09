@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using JWTServer.Processor;
 
 namespace JWTServer.Controllers.AuthController
 {
@@ -16,10 +17,34 @@ namespace JWTServer.Controllers.AuthController
     {
         private readonly IAuthServiceRepository _authService;
         private readonly AppDbContext _context;
-        public AuthController(AppDbContext context,IAuthServiceRepository authService)
+
+        private readonly IProcessor<UserLoginBaseModel> _IProcessor;
+
+        public AuthController(AppDbContext context,IAuthServiceRepository authService, IProcessor<UserLoginBaseModel> IProcessor)
         {
             _context = context;
             _authService = authService;
+            _IProcessor = IProcessor;
+        }
+
+        [HttpGet]
+        [Route("GetUser")]
+        public async Task<IActionResult> GetUser()
+        {
+            try
+            {
+                var result = await _IProcessor.ProcessGet(Guid.NewGuid(), User);
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                string innerexp = "";
+                if (e.InnerException != null)
+                {
+                    innerexp = " Inner Error : " + e.InnerException.ToString();
+                }
+                return BadRequest(e.Message.ToString() + innerexp);
+            }
         }
 
         [HttpPost("RegisterUser")]
@@ -65,24 +90,33 @@ namespace JWTServer.Controllers.AuthController
         [HttpPost("login")]
         public async Task<IActionResult> LoginUser([FromBody] LoginRequest request)
         {
-            // 1. Find user by email
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == request.Email);
+            try
+            {
+                // 1. Find user by email
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            if (user == null)
-                return Unauthorized("User not found");
+                if (user == null)
+                    return Unauthorized("User not found");
 
-            // 2. Hash incoming password
-            var hashedInputPassword = HashPassword(request.Password);
+                // 2. Hash incoming password
+                var hashedInputPassword = HashPassword(request.Password);
 
-            // 3. Compare with stored hash
-            if (user.HashPassword != hashedInputPassword)
-                return Unauthorized("Invalid password");
+                // 3. Compare with stored hash
+                if (user.HashPassword != hashedInputPassword)
+                    return Unauthorized("Invalid password");
 
-            // 4. Generate JWT token
-            var token = _authService.GenerateJwtToken(user.Id.ToString(), user.Email);
+                // 4. Generate JWT token
+                var token = _authService.GenerateJwtToken(user.Id.ToString(), user.Email);
 
-            return Ok(new { token });
+                return Ok(new { token });
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest("An error occurred during login. Exception: "+ex);
+            }
+            
         }
 
 

@@ -26,7 +26,7 @@ namespace JWTServer.Model
 
         public DateTime? DOB { get; set; }
 
-        public int Active { get; set; }
+        public bool Active { get; set; }
 
         public string Action { get; set; }
 
