@@ -27,25 +27,6 @@ namespace JWTServer.Controllers.AuthController
             _IProcessor = IProcessor;
         }
 
-        [HttpGet]
-        [Route("GetUser")]
-        public async Task<IActionResult> GetUser()
-        {
-            try
-            {
-                var result = await _IProcessor.ProcessGet(Guid.NewGuid(), User);
-                return Ok(result);
-            }
-            catch (Exception e)
-            {
-                string innerexp = "";
-                if (e.InnerException != null)
-                {
-                    innerexp = " Inner Error : " + e.InnerException.ToString();
-                }
-                return BadRequest(e.Message.ToString() + innerexp);
-            }
-        }
 
         [HttpPost("RegisterUser")]
         public async Task<IActionResult> RegisterUser([FromBody] UserLoginBaseModel request)
